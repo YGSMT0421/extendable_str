@@ -17,3 +17,5 @@ Provides an optimized "string" class for concatenation: `extendable_str.Extendab
 查阅完整简体中文版README请查阅`README_CN.md`
 
 For the full English README, please refer to `README_EN.md`
+
+English version is translated by DeepSeek

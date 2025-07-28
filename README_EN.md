@@ -14,47 +14,47 @@ Provides an optimized "string" class for concatenation: `extendable_str.Extendab
 
 Methods that trigger string concatenation:
 
-* `__str__()`
+* __`__str__()`__
 
-* `overflow()`
+* __`overflow()`__
 
-* `__getitem__()`
+* __`__getitem__()`__
 
-* `__contains__()`
+* __`__contains__()`__
 
-* `index()`
+* __`index()`__
 
-* `count()`
+* __`count()`__
 
 
 
 Methods that invalidate the cache:
 
-* `__add__()` and `__iadd__()`
+* __`__add__()`__ and __`__iadd__()`__
 
-* `append()`
+* __`append()`__
 
-* `extend()`
+* __`extend()`__
 
 
 
 Detailed method descriptions:
 
-* `__str__()`
+* __`__str__()`__
 
   * Returns the internal concatenated string
 
-* `__add__()` and `__iadd__()`
+* __`__add__()`__ and __`__iadd__()`__
 
   * The right operand should ideally be a sequence where all elements are strings. In practice, it accepts any type - ensure this matches your intended behavior (see `append()`/`extend()` for details)
 
-* `append()`
+* __`append()`__
 
   * `append(typing.Any) -> None`
 
   * Converts the argument to a string and appends it to the internal list
 
-* `extend()`
+* __`extend()`__
 
   * `extend(collections.abc.Sequence) -> None`
 
@@ -66,13 +66,13 @@ Detailed method descriptions:
 
   * Non-sequence arguments delegate to `append()`
 
-* `overflow()`
+* __`overflow()`__
 
   * `overflow() -> None`
 
   * Joins all fragments into a single string and replaces the internal list with this new fragment
 
-* `__getitem__()`
+* __`__getitem__()`__
 
   * `__getitem__(int) -> str`
 
@@ -80,31 +80,31 @@ Detailed method descriptions:
 
   * Returns either a character or a new `ExtendableStr` slice
 
-* `__contains__()`
+* __`__contains__()`__
 
   * `__contains__(typing.Any) -> bool`
 
   * Checks if the string representation of the argument exists in the internal string
 
-* `__iter__()`
+* __`__iter__()`__
 
   * `__iter__() -> typing.Iterator[str]`
 
   * Returns an iterator yielding each character
 
-* `__reversed__()`
+* __`__reversed__()`__
 
   * `__reversed__() -> typing.Iterator[str]`
 
   * Returns a reverse character iterator
 
-* `index()`
+* __`index()`__
 
   * `index(typing.Any) -> int`
 
   * Returns the first index of the argument's string representation. Raises `ValueError` if not found
 
-* `count()`
+* __`count()`__
 
   * `count(typing.Any) -> int`
 
