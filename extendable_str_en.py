@@ -6,6 +6,8 @@ English version is translated by DeepSeek
 """
 
 from collections.abc import Sequence
+from functools import singledispatch
+from typing import Any, Self
 
 __all__ = [
     'ExtendableStr',
@@ -293,7 +295,11 @@ class ExtendableStr(Sequence):
         Merges all chunks into one
         """
         
-        self.__data = [''.join(self.__data)]
+        data = ''.join(self.__data)
+        self.__data = [data]
+        self.__str = data
+        self.__length = len(data)
+        self._set_cache_status(True, True)
 
     ## --- Protocol required methods ---
     
@@ -307,12 +313,21 @@ class ExtendableStr(Sequence):
         self.__measured = True
         return self.__length
     
+    @singledispatch
     def __getitem__(self, index):
+        raise NotImplementedError('Unsupported type')
+    
+    @__getitem__.register
+    def _(self, index: int) -> str:
         self._to_str()
         data = self.__str[index]
-        if isinstance(index, slice):
-            return type(self)(data)
         return data
+    
+    @__getitem__.register
+    def _(self, index: slice) -> Self:
+        self._to_str()
+        data = self.__str[index]
+        return type(self)(data)
 
     def __contains__(self, value):
         self._to_str()
