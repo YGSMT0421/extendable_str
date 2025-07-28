@@ -2,7 +2,7 @@
 
 提供一个对拼接做出优化的“字符串”类：`extendable_str.ExtendableStr`
 
-`extendable_str.ExtendableStr`是一个对拼接做出特别优化的“字符串”类。它舍弃了一定程度上的访问的性能和`getitem()`、`index()`等需要完整访问字符串的性能。
+`extendable_str.ExtendableStr`是一个对拼接做出特别优化的“字符串”类。它舍弃了一定程度上的访问的性能和`getitem()`、`index()`等需要完整访问字符串的操作的性能。
 
 
 
