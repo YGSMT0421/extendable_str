@@ -177,7 +177,6 @@ class ExtendableStr(Sequence):
         self.__str = ''
         self.__formated = False
         self.__length = 0
-        self.__measured = False
         if overflow is None:
             self.__overflow = 0
         elif overflow < 2:    # Must be greater than 1
@@ -237,14 +236,7 @@ class ExtendableStr(Sequence):
             return
         self.__str = ''.join(self._data)
         self.__length = len(self.__str)
-        self._set_cache_status(True, True)
-    
-    def _set_cache_status(self, str_status: bool = False,
-                            len_status: bool = False) -> None:
-        """Set internal cache status"""
-        
-        self.__formated = str_status
-        self.__measured = len_status
+        self.__formated = True
     
     def extend(self, other: Sequence) -> Self:
         """Add sequence to end of string
@@ -256,14 +248,18 @@ class ExtendableStr(Sequence):
         
         if isinstance(other, str):
             self.__data.append(other)
+            self.__length += len(other)
         elif isinstance(other, ExtendableStr):
             self.__data.extend(other._data)
+            self.__length += len(other)
         elif isinstance(other, Sequence):
             other = [str(i) for i in other]
+            length = sum((len(s) for s in other))
             self.__data.extend(other)
+            self.__length += length
         else:
             self.__data.append(str(other))
-        self._set_cache_status()
+        self.__formated = False
         self._join_if_overflow()
     
     def append(self, other: Any) -> None:
@@ -274,7 +270,8 @@ class ExtendableStr(Sequence):
         
         other = str(other)
         self.__data.append(other)
-        self._set_cache_status()
+        self.__length += len(other)
+        self.__formated = False
         self._join_if_overflow()
     
     def _join_if_overflow(self) -> None:
@@ -304,13 +301,6 @@ class ExtendableStr(Sequence):
     ## --- Protocol required methods ---
     
     def __len__(self):
-        if self.__measured:
-            return self.__length
-        if self.__formated:
-            self.__length = len(self.__str)
-        else:
-            self.__length = sum(len(block) for block in self.__data)
-        self.__measured = True
         return self.__length
     
     @singledispatch
