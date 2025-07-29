@@ -186,7 +186,7 @@ class ExtendableStr(Sequence):
             self.__overflow = overflow
     
     @property
-    def _data(self):
+    def _data(self) -> list[str]:
         """Return internal state (not intended for user use)"""
         
         return self.__data
@@ -214,12 +214,12 @@ class ExtendableStr(Sequence):
         blocks = len(self._data)
         return format_str.format(cls, string, blocks)
         
-    def __add__(self, other):
+    def __add__(self, other) -> Self:
         new_obj = type(self)(self._data)
         new_obj += other
         return new_obj
     
-    def __iadd__(self, other):
+    def __iadd__(self, other) -> Self:
         if isinstance(other, str):
             self.append(other)
         elif isinstance(other, ExtendableStr):
@@ -230,7 +230,7 @@ class ExtendableStr(Sequence):
             self.append(str(other))
         return self
     
-    def _to_str(self):
+    def _to_str(self) -> None:
         """Ensure internal string processing completed"""
         
         if self.__formated:
@@ -240,13 +240,13 @@ class ExtendableStr(Sequence):
         self._set_cache_status(True, True)
     
     def _set_cache_status(self, str_status: bool = False,
-                            len_status: bool = False):
+                            len_status: bool = False) -> None:
         """Set internal cache status"""
         
         self.__formated = str_status
         self.__measured = len_status
     
-    def extend(self, other):
+    def extend(self, other: Sequence) -> Self:
         """Add sequence to end of string
         
         Only processes one level (beware nested sequences)
@@ -266,7 +266,7 @@ class ExtendableStr(Sequence):
         self._set_cache_status()
         self._join_if_overflow()
     
-    def append(self, other):
+    def append(self, other: Any) -> None:
         """Add item to end of string
         
         Converts argument to string without traversal
@@ -277,7 +277,7 @@ class ExtendableStr(Sequence):
         self._set_cache_status()
         self._join_if_overflow()
     
-    def _join_if_overflow(self):
+    def _join_if_overflow(self) -> None:
         """Overflow consolidation
         
         Automatically called in append()/extend()
@@ -289,7 +289,7 @@ class ExtendableStr(Sequence):
             if len(self.__data) > self.__overflow:
                 self.overflow()
     
-    def overflow(self):
+    def overflow(self) -> None:
         """Consolidate string
         
         Merges all chunks into one
@@ -341,12 +341,12 @@ class ExtendableStr(Sequence):
         return (item for block in reversed(self._data)
                 for item in reversed(block))
     
-    def index(self, value):
+    def index(self, value: Any) -> int:
         self._to_str()
         value = str(value)
         return self.__str.index(value)
     
-    def count(self, value):
+    def count(self, value: Any) -> int:
         self._to_str()
         value = str(value)
         return self.__str.count(value)

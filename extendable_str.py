@@ -186,7 +186,7 @@ class ExtendableStr(Sequence):
             self.__overflow = overflow
     
     @property
-    def _data(self):
+    def _data(self) -> list[str]:
         """返回内部状态，注意用户不应该调用此方法"""
         
         return self.__data
@@ -214,12 +214,12 @@ class ExtendableStr(Sequence):
         blocks = len(self._data)
         return format_str.format(cls, string, blocks)
         
-    def __add__(self, other):
+    def __add__(self, other) -> Self:
         new_obj = type(self)(self._data)
         new_obj += other
         return new_obj
     
-    def __iadd__(self, other):
+    def __iadd__(self, other) -> Self:
         if isinstance(other, str):
             self.append(other)
         elif isinstance(other, ExtendableStr):
@@ -230,7 +230,7 @@ class ExtendableStr(Sequence):
             self.append(str(other))
         return self
     
-    def _to_str(self):
+    def _to_str(self) -> None:
         """确保内部字符串处理完成"""
         
         if self.__formated:
@@ -240,14 +240,14 @@ class ExtendableStr(Sequence):
         self._set_cache_status(True, True)
     
     def _set_cache_status(self, str_status: bool = False,
-                            len_status: bool = False):
+                            len_status: bool = False) -> None:
         """设置内部缓存状态"""
         
         self.__formated = str_status
         self.__measured = len_status
     
-    def extend(self, other):
-        """添加一个序列到实例所表示的字符串末尾
+    def extend(self, other: Sequence) -> Self:
+        """Add sequence to end of string
         
         只会遍历一层，在传入嵌套序列时请确保这是否符合预期
         字符串会作为一个整体添加到末尾
@@ -266,7 +266,7 @@ class ExtendableStr(Sequence):
         self._set_cache_status()
         self._join_if_overflow()
     
-    def append(self, other):
+    def append(self, other: Any) -> None:
         """在实例所表示的字符串末尾添加一项
         
         会将提供的实参直接转换为字符串后添加，不会进行任何遍历
@@ -277,7 +277,7 @@ class ExtendableStr(Sequence):
         self._set_cache_status()
         self._join_if_overflow()
     
-    def _join_if_overflow(self):
+    def _join_if_overflow(self) -> None:
         """超长整合限制
         
         在append()方法和extend()方法中自动调用
@@ -289,7 +289,7 @@ class ExtendableStr(Sequence):
             if len(self.__data) > self.__overflow:
                 self.overflow()
     
-    def overflow(self):
+    def overflow(self) -> None:
         """整合字符串
         
         将所有块整合为一个块
@@ -341,12 +341,12 @@ class ExtendableStr(Sequence):
         return (item for block in reversed(self._data)
                 for item in reversed(block))
     
-    def index(self, value):
+    def index(self, value: Any) -> int:
         self._to_str()
         value = str(value)
         return self.__str.index(value)
     
-    def count(self, value):
+    def count(self, value: Any) -> int:
         self._to_str()
         value = str(value)
         return self.__str.count(value)
