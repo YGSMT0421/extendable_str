@@ -82,6 +82,27 @@ class ExtendableStr(Sequence):
     >>> es
     ExtendableStr('Kokomi12301234')    # within 1 blocks
     
+    8. inherit为True可以让以此为基础的实例继承overflow
+    不管是通过getitem()还是直接传入__init__()，只要是通过inherit为True的ExtendableStr实例创建的新实例，
+    都会继承overflow
+    >>> es = ExtendableStr('Kokomi', overflow=5, inherit=True)    # 创建新的实例，并启用继承
+    >>> es.extend(range(5))
+    >>> es    # 确认超长整合限制已经启用
+    ExtendableStr('Kokomi01234')    # within 1 blocks
+    >>> tmp = ExtendableStr(es)    # 不指定overflow，将从es中继承
+    >>> tmp    # 确认数据继承
+    ExtendableStr('Kokomi01234')    # within 1 blocks
+    >>> tmp.extend(range(5))
+    >>> tmp    # 确认overflow也已继承
+    ExtendableStr('Kokomi0123401234')    # within 1 blocks
+    >>> tmp = ExtendableStr(es, overflow=10)    # 指定overflow
+    >>> tmp.extend(range(5))
+    >>> tmp    # 未继承overflow
+    ExtendableStr('Kokomi0123401234')    # within 6 blocks
+    >>> tmp.extend(range(5))
+    >>> tmp    # 触发超长整合限制
+    ExtendableStr('Kokomi012340123401234')    # within 1 blocks
+    
     手动整合：
     -----
     
@@ -150,7 +171,8 @@ class ExtendableStr(Sequence):
     """
     
     def __init__(self, seq: Sequence | None = None,
-                 overflow: int | None = None):
+                 overflow: int | None = None,
+                 inherit: bool = False):
         """
         参数：
             seq: 序列类型
@@ -162,27 +184,42 @@ class ExtendableStr(Sequence):
                 值必须不小于2，否则会抛出ValueError
                 可以为空。默认行为是不启用此功能
                 即便为空，你也可以主动调用overflow()方法进行整合
+            inherit：布尔类型
+                是否继承超长整合限制。如果提供了，当**创建新的实例**时传入inherit为True的ExtendableStr实例时，
+                如果未提供overflow，则自动将overflow设为提供的实例的overflow
+                注意：overflow的优先级大于inherit。这意味着如果传入了overflow，
+                即便传入的ExtendableStr实例的inherit为True, 也以传入的overflow为准
+                inherit不会被继承
+                可以为空。默认行为是不启用此功能
         """
         if seq is None:
             self.__data = []
+            self.__length = 0
         else:
             if isinstance(seq, str):
                 self.__data = [seq]
+                self.__length = len(seq)
             elif isinstance(seq, ExtendableStr):
                 self.__data = seq._data[:]
+                self.__length = len(seq)
             elif isinstance(seq, Sequence):
                 self.__data = [str(i) for i in seq]
+                self.__length = sum((len(s) for s in self.__data))
             else:
                 self.__data = [str(seq)]
+                self.__length = len(self.__data[0])
         self.__str = ''
         self.__formated = False
-        self.__length = 0
         if overflow is None:
-            self.__overflow = 0
+            if isinstance(seq, ExtendableStr) and seq._inherit:
+                self._overflow = seq._overflow
+            else:
+                self._overflow = 0
         elif overflow < 2:    # 长度必须大于1
             raise ValueError(f'超长整合限制必须大于1，但是提供的是{overflow}')
         else:
-            self.__overflow = overflow
+            self._overflow = overflow
+        self._inherit = inherit
     
     @property
     def _data(self) -> list[str]:
@@ -214,7 +251,8 @@ class ExtendableStr(Sequence):
         return format_str.format(cls, string, blocks)
         
     def __add__(self, other) -> Self:
-        new_obj = type(self)(self._data)
+        overflow = self._overflow if self._inherit else None
+        new_obj = type(self)(self._data, overflow=overflow)
         new_obj += other
         return new_obj
     
@@ -282,8 +320,8 @@ class ExtendableStr(Sequence):
         检测到内部块数多于指定数量（如果指定了）后将字符串整合为一个块
         """
         
-        if self.__overflow:
-            if len(self.__data) > self.__overflow:
+        if self._overflow:
+            if len(self.__data) > self._overflow:
                 self.overflow()
     
     def overflow(self) -> None:
@@ -303,22 +341,19 @@ class ExtendableStr(Sequence):
     def __len__(self):
         return self.__length
     
-    @singledispatch
     def __getitem__(self, index):
-        raise NotImplementedError('不支持的类型')
+        if isinstance(index, int):
+            self._to_str()
+            return self.__str[index]
+        elif isinstance(index, slice):
+            self._to_str()
+            data = self.__str[index]
+            overflow = self._overflow if self._inherit else None
+            new = type(self)(data, overflow=overflow)
+            return new
+        else:
+            raise NotImplementedError(f"不支持的类型: {type(index)}")
     
-    @__getitem__.register
-    def _(self, index: int) -> str:
-        self._to_str()
-        data = self.__str[index]
-        return data
-    
-    @__getitem__.register
-    def _(self, index: slice) -> Self:
-        self._to_str()
-        data = self.__str[index]
-        return type(self)(data)
-
     def __contains__(self, value):
         self._to_str()
         value = str(value)

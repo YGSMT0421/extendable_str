@@ -116,9 +116,13 @@
 
 创建`extendable_str.ExtendableStr`实例时，传入关键字参数`overflow`即可启用超长整合
 
+超长整合限制默认**不启用**
+
 
 
 #### `overflow: int`
+
+* `overflow`参数是**可选**的
 
 * `overflow`的值必须不小于2。
 
@@ -131,4 +135,18 @@
 #### 手动整合
 
 * 调用`overflow()`方法即可进行手动整合
+
+### 超长整合的继承
+
+- **`inherit: bool = False`**
+
+- `inhert`参数是**可选**的
+
+- 超长整合的继承默认**不启用**
+
+- 当通过一个`inherit`为`True`的`ExtendableStr`实例创建新的实例（不管是通过`getitem()`还是`__init__()`等）时，如果没有指定`overflow`参数，则从原来的实例中继承`overflow`的值
+
+- 如果提供了新实例的`overflow`参数，那么不管原实例的`inherit`是什么，都**以提供的`overflow`为准**
+
+- `inherit`参数的值**不会**被继承
 
