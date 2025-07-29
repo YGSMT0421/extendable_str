@@ -6,7 +6,7 @@ Provides an optimized "string" class for concatenation: `extendable_str.Extendab
 
 
 
-### Introduction
+## Introduction
 
 `extendable_str.ExtendableStr` maintains efficiency by keeping an internal list of string fragments. It performs lazy evaluation whenever possible, only concatenating strings when necessary. Once concatenated, the result is cached until new data is added.
 
@@ -112,13 +112,13 @@ Detailed method descriptions:
 
 
 
-### Overflow Integration
+## Overflow Integration
 
 Enable overflow integration by providing the `overflow` keyword argument when creating an `ExtendableStr` instance
 
 
 
-#### `overflow: int`
+### `overflow: int`
 
 * Must be ≥ 2
 
@@ -128,7 +128,7 @@ Enable overflow integration by providing the `overflow` keyword argument when cr
 
 
 
-#### Manual Integration
+### Manual Integration
 
 * Call the `overflow()` method to manually consolidate fragments
 
