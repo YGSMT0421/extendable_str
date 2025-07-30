@@ -6,7 +6,6 @@ English version is translated by DeepSeek
 """
 
 from collections.abc import Sequence
-from functools import singledispatch
 from typing import Any, Self
 
 __all__ = [
@@ -84,10 +83,32 @@ class ExtendableStr(Sequence):
     >>> es
     ExtendableStr('Kokomi12301234')    # within 1 blocks
     
+    8. inherit=True enables overflow inheritance to new instances
+    Regardless of creation method (getitem() or __init__()), when creating new instances 
+    from an ExtendableStr instance with inherit=True, the new instance inherits overflow 
+    unless overflow is explicitly provided
+    >>> es = ExtendableStr('Kokomi', overflow=5, inherit=True)
+    >>> es.extend(range(5))
+    >>> es    # Overflow limit applied
+    ExtendableStr('Kokomi01234')    # within 1 blocks
+    >>> tmp = ExtendableStr(es)    # Inherits overflow from es
+    >>> tmp
+    ExtendableStr('Kokomi01234')    # within 1 blocks
+    >>> tmp.extend(range(5))
+    >>> tmp    # Confirms overflow inheritance
+    ExtendableStr('Kokomi0123401234')    # within 1 blocks
+    >>> tmp = ExtendableStr(es, overflow=10)    # Explicit overflow
+    >>> tmp.extend(range(5))
+    >>> tmp    # No inheritance (explicit overflow used)
+    ExtendableStr('Kokomi0123401234')    # within 6 blocks
+    >>> tmp.extend(range(5))
+    >>> tmp    # Overflow limit triggered
+    ExtendableStr('Kokomi012340123401234')    # within 1 blocks
+    
     Manual consolidation:
     -----
     
-    8. Manually consolidate instance
+    9. Manually consolidate instance
     >>> es = ExtendableStr()    # Create new instance
     >>> es.extend(range(5))
     >>> es
@@ -99,7 +120,7 @@ class ExtendableStr(Sequence):
     Sequence methods:
     -----
     
-    9. len() returns string length without concatenation
+    10. len() returns string length without concatenation
     >>> es = ExtendableStr()    # Create new instance
     >>> es.append('Sangonomiya')
     >>> # Strings still not concatenated
@@ -112,7 +133,7 @@ class ExtendableStr(Sequence):
     >>> print(es)    # First concatenation
     Sangonomiya Kokomi
     
-    10. getitem() returns specific string items
+    11. getitem() returns specific string items
     Integer index returns single character
     Slice returns ExtendableStr with result
     >>> es = ExtendableStr()    # Create new instance
@@ -122,7 +143,7 @@ class ExtendableStr(Sequence):
     >>> es[-6:]
     ExtendableStr('Kokomi')    # within 1 blocks
     
-    11. Other methods
+    12. Other methods
     >>> es = ExtendableStr()    # Create new instance
     >>> es.append('Sangonomiya Kokomi')
     
@@ -150,7 +171,8 @@ class ExtendableStr(Sequence):
     """
     
     def __init__(self, seq: Sequence | None = None,
-                 overflow: int | None = None):
+                 overflow: int | None = None,
+                 inherit: bool = False):
         """
         Parameters:
             seq: Sequence type
@@ -162,27 +184,41 @@ class ExtendableStr(Sequence):
                 Must be ≥2, otherwise raises ValueError
                 Default: None (feature disabled)
                 Can manually call overflow() even when None
+            inherit: Boolean type
+                Enable overflow inheritance. When creating new instances from an ExtendableStr instance 
+                with inherit=True, new instance inherits overflow unless overflow is explicitly provided
+                Note: Explicit overflow parameter takes precedence over inheritance
+                inherit itself is not inherited
+                Default: False (inheritance disabled)
         """
         if seq is None:
             self.__data = []
+            self.__length = 0
         else:
             if isinstance(seq, str):
                 self.__data = [seq]
+                self.__length = len(seq)
             elif isinstance(seq, ExtendableStr):
                 self.__data = seq._data[:]
+                self.__length = len(seq)
             elif isinstance(seq, Sequence):
                 self.__data = [str(i) for i in seq]
+                self.__length = sum((len(s) for s in self.__data))
             else:
                 self.__data = [str(seq)]
+                self.__length = len(self.__data[0])
         self.__str = ''
         self.__formated = False
-        self.__length = 0
         if overflow is None:
-            self.__overflow = 0
+            if isinstance(seq, ExtendableStr) and seq._inherit:
+                self._overflow = seq._overflow
+            else:
+                self._overflow = 0
         elif overflow < 2:    # Must be greater than 1
             raise ValueError(f'Overflow limit must be >1, got {overflow}')
         else:
-            self.__overflow = overflow
+            self._overflow = overflow
+        self._inherit = inherit
     
     @property
     def _data(self) -> list[str]:
@@ -214,7 +250,8 @@ class ExtendableStr(Sequence):
         return format_str.format(cls, string, blocks)
         
     def __add__(self, other) -> Self:
-        new_obj = type(self)(self._data)
+        overflow = self._overflow if self._inherit else None
+        new_obj = type(self)(self._data, overflow=overflow, inherit=self._inherit)
         new_obj += other
         return new_obj
     
@@ -282,8 +319,8 @@ class ExtendableStr(Sequence):
         Consolidates to single chunk if chunk count exceeds limit
         """
         
-        if self.__overflow:
-            if len(self.__data) > self.__overflow:
+        if self._overflow:
+            if len(self.__data) > self._overflow:
                 self.overflow()
     
     def overflow(self) -> None:
@@ -296,29 +333,26 @@ class ExtendableStr(Sequence):
         self.__data = [data]
         self.__str = data
         self.__length = len(data)
-        self._set_cache_status(True, True)
+        self.__formated = True
 
     ## --- Protocol required methods ---
     
     def __len__(self):
         return self.__length
     
-    @singledispatch
     def __getitem__(self, index):
-        raise NotImplementedError('Unsupported type')
+        if isinstance(index, int):
+            self._to_str()
+            return self.__str[index]
+        elif isinstance(index, slice):
+            self._to_str()
+            data = self.__str[index]
+            overflow = self._overflow if self._inherit else None
+            new = type(self)(data, overflow=overflow, inherit=self._inherit)
+            return new
+        else:
+            raise NotImplementedError(f"Unsupported type: {type(index)}")
     
-    @__getitem__.register
-    def _(self, index: int) -> str:
-        self._to_str()
-        data = self.__str[index]
-        return data
-    
-    @__getitem__.register
-    def _(self, index: slice) -> Self:
-        self._to_str()
-        data = self.__str[index]
-        return type(self)(data)
-
     def __contains__(self, value):
         self._to_str()
         value = str(value)

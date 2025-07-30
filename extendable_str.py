@@ -1,10 +1,9 @@
 """extendable_str模块，提供一个对常追加优化的ExtendStr类
 
-模块包含了一个类：ExtendStr
+模块包含了一个类：ExtendableStr
 """
 
 from collections.abc import Sequence
-from functools import singledispatch
 from typing import Any, Self
 
 __all__ = [
