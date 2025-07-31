@@ -4,13 +4,9 @@ Provides an optimized "string" class for concatenation: `extendable_str.Extendab
 
 `extendable_str.ExtendableStr` is a specialized "string" class optimized for concatenation operations. It sacrifices some performance in element access and operations like `getitem()`/`index()` that require full string traversal.
 
-
-
 ## Introduction
 
 `extendable_str.ExtendableStr` maintains efficiency by keeping an internal list of string fragments. It performs lazy evaluation whenever possible, only concatenating strings when necessary. Once concatenated, the result is cached until new data is added.
-
-
 
 Methods that trigger string concatenation:
 
@@ -111,24 +107,39 @@ Detailed method descriptions:
   * Counts occurrences of the argument's string representation
 
 
-
 ## Overflow Integration
 
-Enable overflow integration by providing the `overflow` keyword argument when creating an `ExtendableStr` instance
+Enable overflow integration by providing the `overflow` keyword argument when creating an `ExtendableStr` instance.
 
+Overflow integration is **disabled** by default.
 
 
 ### `overflow: int`
 
-* Must be ≥ 2
+* `overflow` parameter is **optional**
+
+* Value must be ≥ 2 (raises `ValueError` otherwise)
 
 * Triggered automatically after `__add__()`, `__iadd__()`, `append()`, or `extend()` operations
 
 * When internal fragment count exceeds the `overflow` value, calls `overflow()` automatically
 
 
+### Inheritance of overflow
+
+* **`inherit: bool = False`**
+
+* `inherit` parameter is **optional**
+
+* Overflow inheritance is **disabled** by default
+
+* When creating new instances (via `__init__` or slicing) from an `ExtendableStr` instance with `inherit=True`, the new instance will inherit the `overflow` value from the original instance if no `overflow` parameter is provided
+
+* Explicitly providing `overflow` during creation takes precedence over inheritance
+
+* The `inherit` parameter value is **not** inherited by new instances
+
 
 ### Manual Integration
 
 * Call the `overflow()` method to manually consolidate fragments
-
